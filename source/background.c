@@ -405,8 +405,15 @@ int background_functions(
      Note: The scalar field contribution must be added in the end, as an exception!*/
   double dp_dloga;
 
+  double rho_tot_nlqm, p_tot_nlqm;
+
   /** - initialize local variables */
   rho_tot = 0.;
+
+  if(pba->epsilon_nlqm != 0.0){
+    rho_tot_nlqm = 0;
+    p_tot_nlqm = 0;
+  }
   p_tot = 0.;
   dp_dloga = 0.;
   rho_r=0.;
@@ -419,6 +426,7 @@ int background_functions(
   /** - pass value of \f$ a\f$ to output */
   pvecback[pba->index_bg_a] = a;
 
+
   /** - compute each component's density and pressure */
 
   /* photons */
@@ -428,11 +436,25 @@ int background_functions(
   dp_dloga += -(4./3.) * pvecback[pba->index_bg_rho_g];
   rho_r += pvecback[pba->index_bg_rho_g];
 
+  /** - VP: nonlinear QM correction*/
+
+  if(pba->epsilon_nlqm != 0.0){
+    rho_tot_nlqm += pba->Omega0_g * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,4);
+    p_tot_nlqm += (1./3.) *pba->Omega0_g * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,4);
+  }
+
   /* baryons */
   pvecback[pba->index_bg_rho_b] = pba->Omega0_b * pow(pba->H0,2) / pow(a,3);
   rho_tot += pvecback[pba->index_bg_rho_b];
   p_tot += 0;
   rho_m += pvecback[pba->index_bg_rho_b];
+
+  /** - VP: nonlinear QM correction*/
+
+  if(pba->epsilon_nlqm != 0.0){
+    rho_tot_nlqm += pba->Omega0_b * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,3);
+    p_tot_nlqm += 0 ;
+  }
 
   /* cdm */
   if (pba->has_cdm == _TRUE_) {
@@ -440,6 +462,14 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_cdm];
     p_tot += 0.;
     rho_m += pvecback[pba->index_bg_rho_cdm];
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+      rho_tot_nlqm += pba->Omega0_cdm * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,3);
+      p_tot_nlqm += 0 ;
+    }
+
   }
 
   /* dcdm */
@@ -449,6 +479,13 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_dcdm];
     p_tot += 0.;
     rho_m += pvecback[pba->index_bg_rho_dcdm];
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+
+      //neglected for now;
+
+    }
   }
 
   /* dr */
@@ -459,6 +496,13 @@ int background_functions(
     p_tot += (1./3.)*pvecback[pba->index_bg_rho_dr];
     dp_dloga += -(4./3.) * pvecback[pba->index_bg_rho_dr];
     rho_r += pvecback[pba->index_bg_rho_dr];
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+
+      //neglected for now;
+
+    }
   }
 
   /* Scalar field */
@@ -479,6 +523,14 @@ int background_functions(
     rho_r += 3.*pvecback[pba->index_bg_p_scf]; //field pressure contributes radiation
     rho_m += pvecback[pba->index_bg_rho_scf] - 3.* pvecback[pba->index_bg_p_scf]; //the rest contributes matter
     //printf(" a= %e, Omega_scf = %f, \n ",a, pvecback[pba->index_bg_rho_scf]/rho_tot );
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+
+      //neglected for now;
+
+    }
   }
 
   /* ncdm */
@@ -518,6 +570,32 @@ int background_functions(
       /* (rho_ncdm1 - 3 p_ncdm1) is the "non-relativistic" contribution
          to rho_ncdm1 */
       rho_m += rho_ncdm - 3.* p_ncdm;
+
+
+      /** - VP: nonlinear QM correction*/
+
+      if(pba->epsilon_nlqm != 0.0){
+        /* function returning background ncdm[n_ncdm] quantities (only
+           those for which non-NULL pointers are passed) */
+        class_call(background_ncdm_momenta(
+                                           pba->q_ncdm_bg[n_ncdm],
+                                           pba->w_ncdm_bg[n_ncdm],
+                                           pba->q_size_ncdm_bg[n_ncdm],
+                                           pba->M_ncdm[n_ncdm],
+                                           pba->factor_ncdm[n_ncdm],
+                                           1./(a+pba->delta_a_nlqm)-1.,
+                                           NULL,
+                                           &rho_ncdm,
+                                           &p_ncdm,
+                                           NULL,
+                                           &pseudo_p_ncdm),
+                   pba->error_message,
+                   pba->error_message);
+
+        rho_tot_nlqm += rho_ncdm;
+        p_tot_nlqm += p_ncdm ;
+      }
+
     }
   }
 
@@ -526,6 +604,14 @@ int background_functions(
     pvecback[pba->index_bg_rho_lambda] = pba->Omega0_lambda * pow(pba->H0,2);
     rho_tot += pvecback[pba->index_bg_rho_lambda];
     p_tot -= pvecback[pba->index_bg_rho_lambda];
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+      rho_tot_nlqm += pba->Omega0_lambda * pow(pba->H0,2);
+      p_tot_nlqm += -pba->Omega0_lambda * pow(pba->H0,2) ;
+    }
+
   }
 
   /* fluid with w(a) and constant cs2 */
@@ -545,6 +631,16 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_fld];
     p_tot += w_fld * pvecback[pba->index_bg_rho_fld];
     dp_dloga += (a*dw_over_da-3*(1+w_fld)*w_fld)*pvecback[pba->index_bg_rho_fld];
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+
+      //neglected for now;
+
+    }
+
+
   }
 
   /* relativistic neutrinos (and all relativistic relics) */
@@ -554,6 +650,15 @@ int background_functions(
     p_tot += (1./3.) * pvecback[pba->index_bg_rho_ur];
     dp_dloga += -(4./3.) * pvecback[pba->index_bg_rho_ur];
     rho_r += pvecback[pba->index_bg_rho_ur];
+
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+      rho_tot_nlqm += pba->Omega0_ur * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,4);
+      p_tot_nlqm += (1./3.) * pba->Omega0_ur * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,4);
+    }
+
   }
 
   /* interacting dark matter */
@@ -562,6 +667,15 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_idm_dr];
     p_tot += 0.;
     rho_m += pvecback[pba->index_bg_rho_idm_dr];
+
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+      rho_tot_nlqm += pba->Omega0_idm_dr * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,3);
+      p_tot_nlqm += 0;
+    }
+
   }
 
   /* interacting dark radiation */
@@ -570,6 +684,14 @@ int background_functions(
     rho_tot += pvecback[pba->index_bg_rho_idr];
     p_tot += (1./3.) * pvecback[pba->index_bg_rho_idr];
     rho_r += pvecback[pba->index_bg_rho_idr];
+
+    /** - VP: nonlinear QM correction*/
+
+    if(pba->epsilon_nlqm != 0.0){
+      rho_tot_nlqm += pba->Omega0_idr * pow(pba->H0,2) / pow(a+pba->delta_a_nlqm,4);
+      p_tot_nlqm += (1./3) * pba->Omega0_idr * pow(pba->H0,2) / pow(a,4);
+    }
+
   }
 
   /** - compute expansion rate H from Friedmann equation: this is the
@@ -578,8 +700,17 @@ int background_functions(
       \f$ \rho_{class} = [8 \pi G \rho_{physical} / 3 c^2]\f$ */
   pvecback[pba->index_bg_H] = sqrt(rho_tot-pba->K/a/a);
 
+  /** - VP: nonlinear QM correction to H */
+  // printf("pba->epsilon_nlqm %e pba->delta_a_nlqm %e rho_tot_nlqm %e p_tot_nlqm %e\n", pba->epsilon_nlqm,pba->delta_a_nlqm,rho_tot_nlqm,p_tot_nlqm);
+  pvecback[pba->index_bg_H] += pba->epsilon_nlqm*sqrt(rho_tot_nlqm-pba->K/(a+pba->delta_a_nlqm)/(a+pba->delta_a_nlqm));
+
   /** - compute derivative of H with respect to conformal time */
   pvecback[pba->index_bg_H_prime] = - (3./2.) * (rho_tot + p_tot) * a + pba->K/a;
+
+
+  /** - VP: nonlinear QM correction to H' */
+
+  pvecback[pba->index_bg_H_prime] += pba->epsilon_nlqm*(- (3./2.) * (rho_tot_nlqm + p_tot_nlqm) * (a+pba->delta_a_nlqm) + pba->K/(a+pba->delta_a_nlqm));
 
   /* Total energy density*/
   pvecback[pba->index_bg_rho_tot] = rho_tot;

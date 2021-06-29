@@ -2801,6 +2801,8 @@ int input_read_parameters_species(struct file_content * pfc,
   Omega_tot += pba->Omega0_idm_dr;
   Omega_tot += pba->Omega0_idr;
   Omega_tot += pba->Omega0_ncdm_tot;
+  Omega_tot += pba->Omega0_dcdmdr;
+
   /* Step 1 */
   if (flag1 == _TRUE_){
     pba->Omega0_lambda = param1;
@@ -2946,6 +2948,14 @@ int input_read_parameters_species(struct file_content * pfc,
       printf("'scf_lambda' = %e < 3 won't be tracking (for exp quint) unless overwritten by tuning function.",scf_lambda);
     }
   }
+
+  /** - VP: nonlinear QM correction */
+
+  class_read_double("epsilon_nlqm",pba->epsilon_nlqm);
+  class_read_double("delta_a_nlqm",pba->delta_a_nlqm);
+
+
+
 
   return _SUCCESS_;
 
@@ -5357,6 +5367,9 @@ int input_default_params(struct background *pba,
   /** 9.b.4) Shooting parameter */
   pba->shooting_failed = _FALSE_;
 
+  /** - VP: nonlinear QM correction */
+  pba->epsilon_nlqm = 0.0;
+  pba->delta_a_nlqm = 0.0;
   /**
    * Deafult to input_read_parameters_heating
    */

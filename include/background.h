@@ -314,6 +314,12 @@ struct background
   ErrorMsg error_message; /**< zone for writing error messages */
 
   //@}
+
+  /** - VP: nonlinear QM correction  */
+
+  double epsilon_nlqm;
+  double delta_a_nlqm;
+
 };
 
 
