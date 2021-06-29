@@ -426,7 +426,7 @@ int background_functions(
   /** - pass value of \f$ a\f$ to output */
   pvecback[pba->index_bg_a] = a;
 
-
+  pba->delta_a_nlqm = pba->delta_a_nlqm_over_a*a;
   /** - compute each component's density and pressure */
 
   /* photons */

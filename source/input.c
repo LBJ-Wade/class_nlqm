@@ -2953,6 +2953,7 @@ int input_read_parameters_species(struct file_content * pfc,
 
   class_read_double("epsilon_nlqm",pba->epsilon_nlqm);
   class_read_double("delta_a_nlqm",pba->delta_a_nlqm);
+  class_read_double("delta_a_nlqm_over_a",pba->delta_a_nlqm_over_a);
 
 
 
@@ -5370,6 +5371,7 @@ int input_default_params(struct background *pba,
   /** - VP: nonlinear QM correction */
   pba->epsilon_nlqm = 0.0;
   pba->delta_a_nlqm = 0.0;
+  pba->delta_a_nlqm_over_a = 0.0;
   /**
    * Deafult to input_read_parameters_heating
    */

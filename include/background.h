@@ -319,6 +319,7 @@ struct background
 
   double epsilon_nlqm;
   double delta_a_nlqm;
+  double delta_a_nlqm_over_a;
 
 };
 
